@@ -14,11 +14,11 @@ const rules = require('./rules');
  */
 function total(items = []) {
     const itemsGroupedBySku = items
-        .reduce((acc, item) => ({...acc, [item] : (acc[item] ? acc[item] : 0) + 1}), {});
+        .reduce((acc, item) => ({...acc, [item] : (acc[item] || 0) + 1}), {});
 
     const totalPrice = Object
         .keys(itemsGroupedBySku)
-        .reduce((total, sku) => (total += catalogue[sku]['price'] * itemsGroupedBySku[sku]), 0);
+        .reduce((total, sku) => (total + catalogue[sku]['price'] * itemsGroupedBySku[sku]), 0);
 
     const discount = applyRules({
         catalogue,
@@ -46,11 +46,13 @@ function applyRules({
 }) {
     return rules
         .reduce((discount, {type, items}) => (
-            discount += items
+            discount + items
                 .reduce((total, item) => {
                     const {sku, dependsOn, qualifyingQnt} = item;
                     const itemCount = itemsGroupedBySku[sku];
 
+                    // If complex rules are to be supported,
+                    // this piece of logic can be its own module, something like rule.evaluate()
                     switch (type) {
                         case 'bulk':
                             total += itemCount >= qualifyingQnt
